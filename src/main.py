@@ -3,6 +3,7 @@ import json
 import os
 
 from AnnotationDiff import DirFiles, process_element_files, get_diff, get_report_item
+from NodeNormalization import get_normalized_concept_ids
 
 
 def main():
@@ -28,6 +29,25 @@ def main():
     elements_diff = get_diff(all_elements, dirs, True)
 
     sorted_elements_diff = sorted(elements_diff.items(), key=lambda x: x[1].id)
+    ### get normalized ids
+    all_concept_ids =set([c.id
+                       for e in all_elements
+                       for c in e.concepts])
+
+    norm_result = get_normalized_concept_ids(all_concept_ids)
+
+    #set norm_id and label for concepts
+    for e in all_elements:
+        for c in e.concepts:
+            if (c.id in norm_result
+                    and type(norm_result[c.id]) is dict
+                    and "id" in norm_result[c.id]
+                    and "identifier" in norm_result[c.id]["id"]
+                    and "label" in norm_result[c.id]["id"]):
+                c.norm_id = norm_result[c.id]["id"]["identifier"]
+                c.label = norm_result[c.id]["id"]["label"]
+            else:
+                print(f"Not enough normalized info for concept {c.id}")
 
     ## make report
 
@@ -39,6 +59,13 @@ def main():
 
 
     report_doc = []
+
+    get_concept_dict = lambda c: {
+        "id": c.id,
+        "norm_id": c.norm_id,
+        "label": c.label
+    }
+
     for e in all_reports:
         el = {
             "id": e.id,
@@ -54,7 +81,7 @@ def main():
     with open(args.destination, 'a') as output:
         output.write(result_txt)
 
-    pass
+
 
 
 def get_element_files(dirs) -> list[DirFiles]:

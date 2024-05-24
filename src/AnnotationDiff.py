@@ -8,6 +8,8 @@ class DugConcept(object):
     name: str
     description: str
     source_dir: str
+    norm_id: str
+    label: str
 
 
 @dataclass
@@ -69,7 +71,9 @@ def process_element_files(df: DirFiles) -> list[DugElement]:
                         element.concepts.append(DugConcept(id=concept['id'],
                                                            name=concept['name'],
                                                            description=concept['description'],
-                                                           source_dir=df.directory))
+                                                           source_dir=df.directory,
+                                                           norm_id=None,
+                                                           label=None))
                     else:
                         #possible error in an input file
                         print("----No concept------")
