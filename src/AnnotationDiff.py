@@ -19,6 +19,16 @@ class DugElement(object):
     description: str
     concepts: list[DugConcept]
     source_dir: str
+    concept_dict: dict
+
+    def get_concept_by_id(self, id: str) -> DugConcept:
+        if self.concept_dict:
+            return self.concept_dict[id]
+
+        self.concept_dict = {}
+        for concept in self.concepts:
+            self.concept_dict[concept.id] = concept
+        return self.concept_dict[id]
 
 
 @dataclass
@@ -32,12 +42,14 @@ class DirFiles(object):
 class Diff(object):
     """Contains information about where some item is present"""
     id: str
+    norm_id: str
     exists_in: set[str]
     absent_in: set[str]
     child_diff: dict
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, norm_id: str):
         self.id = id
+        self.norm_id = norm_id
         self.exists_in = set()
         self.absent_in = set()
         self.child_diff = {}
@@ -50,7 +62,7 @@ class Report:
     id: str
     action: str
     children: list # nested Report list
-
+    diff: Diff
 
 def process_element_files(df: DirFiles) -> list[DugElement]:
     """Parses JSON elements files and returns a list of DugElements"""
@@ -63,7 +75,8 @@ def process_element_files(df: DirFiles) -> list[DugElement]:
                                      name=d['name'],
                                      description=d['description'],
                                      concepts=[],
-                                     source_dir=df.directory)
+                                     source_dir=df.directory,
+                                     concept_dict=None)
                 res.append(element)
                 for c in d['concepts']:
                     concept = d['concepts'][c]
@@ -90,7 +103,7 @@ def get_diff(all_elements: list, all_places: list, process_concepts: bool) -> di
     diff: dict[str, Diff] = {}
     for e in all_elements:
         if e.id not in diff:
-            diff[e.id] = Diff(id=e.id)
+            diff[e.id] = Diff(id=e.id, norm_id=e.id)
             diff[e.id].absent_in = set(all_places)
 
         diff[e.id].exists_in.add(e.source_dir)
@@ -98,12 +111,13 @@ def get_diff(all_elements: list, all_places: list, process_concepts: bool) -> di
 
         if process_concepts:
             for c in e.concepts:
-                if c.id not in diff[e.id].child_diff:
-                    diff[e.id].child_diff[c.id] = Diff(id=c.id)
-                    diff[e.id].child_diff[c.id].absent_in = set(all_places)
+                id_to_compare = c.norm_id
+                if id_to_compare not in diff[e.id].child_diff:
+                    diff[e.id].child_diff[id_to_compare] = Diff(id=c.id, norm_id=c.norm_id)
+                    diff[e.id].child_diff[id_to_compare].absent_in = set(all_places)
 
-                diff[e.id].child_diff[c.id].absent_in.remove(c.source_dir)
-                diff[e.id].child_diff[c.id].exists_in.add(c.source_dir)
+                diff[e.id].child_diff[id_to_compare].absent_in.remove(c.source_dir)
+                diff[e.id].child_diff[id_to_compare].exists_in.add(c.source_dir)
 
 
     return diff
@@ -113,7 +127,7 @@ def get_report_item(path1: str, path2: str, element: Diff) -> Report:
     """:argument path1 - path to the folder with annotations
        :argument path2 - path to the folder with annotations, that we compare to
        :argument element - Diff information for an element"""
-    r = Report(element.id, "none", [])
+    r = Report(element.id, "none", [], element)
 
     if path1 in element.absent_in and path2 in element.exists_in:
         r.action = "added"

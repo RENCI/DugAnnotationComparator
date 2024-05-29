@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from itertools import groupby
 
 from AnnotationDiff import DirFiles, process_element_files, get_diff, get_report_item
 from NodeNormalization import get_normalized_concept_ids
@@ -17,18 +18,21 @@ def main():
     element_files_to_cmp = get_element_files(dirs)
 
     all_elements = []
-    id_to_desc = {}
+    id_to_element = {}
+    source_to_elementdict_by_id = {}
 
     for files in element_files_to_cmp:
         fs = process_element_files(files)
         all_elements.extend(fs)
         for element in fs:
-            id_to_desc[element.id] = element.description
+            id_to_element[element.id] = element
+
+            if element.source_dir not in source_to_elementdict_by_id:
+                source_to_elementdict_by_id[element.source_dir] = {}
+
+            source_to_elementdict_by_id[element.source_dir][element.id] = element
 
 
-    elements_diff = get_diff(all_elements, dirs, True)
-
-    sorted_elements_diff = sorted(elements_diff.items(), key=lambda x: x[1].id)
     ### get normalized ids
     all_concept_ids =set([c.id
                        for e in all_elements
@@ -49,6 +53,10 @@ def main():
             else:
                 print(f"Not enough normalized info for concept {c.id}")
 
+    elements_diff = get_diff(all_elements, dirs, True)
+
+    sorted_elements_diff = sorted(elements_diff.items(), key=lambda x: x[1].id)
+
     ## make report
 
     all_reports = []
@@ -60,25 +68,39 @@ def main():
 
     report_doc = []
 
-    get_concept_dict = lambda c: {
-        "id": c.id,
-        "norm_id": c.norm_id,
-        "label": c.label
-    }
+    def get_concept_for_report(c):
+        return {
+            "id": c.id,
+            "norm_id": c.norm_id,
+            "label": c.label
+        }
 
     for e in all_reports:
+        element = id_to_element[e.id]
+
+        concepts_grouped_by_action = groupby(e.children, lambda c: c.action)
+        concepts_grouped_by_action_dict = {"none": [], "added": [], "deleted": []}
+        for k, g in concepts_grouped_by_action:
+            concepts_grouped_by_action_dict[k] = list(g)
+        deleted_concepts = []
+
+        for d in concepts_grouped_by_action_dict["deleted"]:
+            concept_exists_in = list(d.diff.exists_in)[0]
+            el_in_existing = source_to_elementdict_by_id[concept_exists_in][e.id]
+            deleted_concepts.append(el_in_existing.get_concept_by_id(d.id))
+
         el = {
-            "id": e.id,
-            "description": id_to_desc[e.id],
-            "concepts": list([c.id for c in filter(lambda f: "none" == f.action, e.children)]),
-            "new_concepts": list([c.id for c in filter(lambda f: "added" == f.action, e.children)]),
-            "deleted_concepts": list([c.id for c in filter(lambda f: "deleted" == f.action, e.children)]),
+            "id": element.id,
+            "description": element.description,
+            "same_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["none"]],
+            "new_concepts":  [get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["added"]],
+            "deleted_concepts":  [get_concept_for_report(d) for d in deleted_concepts]
         }
         report_doc.append(el)
 
     result_txt = json.dumps(report_doc)
 
-    with open(args.destination, 'a') as output:
+    with open(args.destination, 'w') as output:
         output.write(result_txt)
 
 
