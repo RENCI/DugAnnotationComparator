@@ -15,12 +15,16 @@ def main():
     args = parser.parse_args()
 
     dirs = args.list
-    element_files_to_cmp = get_element_files(dirs)
+    destination = args.destination
 
+    compare(destination, dirs)
+
+
+def compare(destination, dirs):
+    element_files_to_cmp = get_element_files(dirs)
     all_elements = []
     id_to_element = {}
     source_to_elementdict_by_id = {}
-
     for files in element_files_to_cmp:
         fs = process_element_files(files)
         all_elements.extend(fs)
@@ -31,16 +35,12 @@ def main():
                 source_to_elementdict_by_id[element.source_dir] = {}
 
             source_to_elementdict_by_id[element.source_dir][element.id] = element
-
-
     ### get normalized ids
-    all_concept_ids =set([c.id
-                       for e in all_elements
-                       for c in e.concepts])
-
+    all_concept_ids = set([c.id
+                           for e in all_elements
+                           for c in e.concepts])
     norm_result = get_normalized_concept_ids(all_concept_ids)
-
-    #set norm_id and label for concepts
+    # set norm_id and label for concepts
     for e in all_elements:
         for c in e.concepts:
             if (c.id in norm_result
@@ -52,20 +52,14 @@ def main():
                 c.label = norm_result[c.id]["id"]["label"]
             else:
                 print(f"Not enough normalized info for concept {c.id}")
-
     elements_diff = get_diff(all_elements, dirs, True)
-
     sorted_elements_diff = sorted(elements_diff.items(), key=lambda x: x[1].id)
-
     ## make report
-
     all_reports = []
     for e in sorted_elements_diff:
         element = e[1]
         r = get_report_item(dirs[0], dirs[1], element)
         all_reports.append(r)
-
-
     report_doc = []
 
     def get_concept_for_report(c):
@@ -92,18 +86,16 @@ def main():
         el = {
             "id": element.id,
             "description": element.description,
-            "same_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["none"]],
-            "new_concepts":  [get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["added"]],
-            "deleted_concepts":  [get_concept_for_report(d) for d in deleted_concepts]
+            "same_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in
+                              concepts_grouped_by_action_dict["none"]],
+            "new_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in
+                             concepts_grouped_by_action_dict["added"]],
+            "deleted_concepts": [get_concept_for_report(d) for d in deleted_concepts]
         }
         report_doc.append(el)
-
     result_txt = json.dumps(report_doc)
-
-    with open(args.destination, 'w') as output:
+    with open(destination, 'w') as output:
         output.write(result_txt)
-
-
 
 
 def get_element_files(dirs) -> list[DirFiles]:
