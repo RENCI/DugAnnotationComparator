@@ -3,8 +3,8 @@ import json
 import os
 from itertools import groupby
 
-from AnnotationDiff import DirFiles, process_element_files, get_diff, get_report_item
-from NodeNormalization import get_normalized_concept_ids
+from annotationdiff import DirFiles, process_element_files, get_diff, get_report_item
+from nodenormalization import get_normalized_concept_ids
 
 
 def main():
