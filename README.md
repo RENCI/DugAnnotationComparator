@@ -1,4 +1,4 @@
-# DugAnnotatorComparator
+# DugAnnotationComparator
 
 Example of usage:
 
