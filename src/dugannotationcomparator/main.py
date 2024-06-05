@@ -11,16 +11,18 @@ def main():
     parser = argparse.ArgumentParser(description='Util that compares output annotator files')
     parser.add_argument('-l', '--list', nargs='*', help='<Required> List of directories', required=True)
     parser.add_argument('-d', '--destination', help='<Required> Path for the output', required=True)
+    parser.add_argument('-e', '--empty', help='<Optional> Include variants with no concepts', required=False, default=False)
 
     args = parser.parse_args()
 
     dirs = args.list
     destination = args.destination
+    include_empty = args.empty
 
-    compare(destination, dirs)
+    compare(destination, dirs, include_empty)
 
 
-def compare(destination, dirs):
+def compare(destination, dirs, include_empty):
     element_files_to_cmp = get_element_files(dirs)
     all_elements = []
     id_to_element = {}
@@ -76,23 +78,30 @@ def compare(destination, dirs):
         concepts_grouped_by_action_dict = {"none": [], "added": [], "deleted": []}
         for k, g in concepts_grouped_by_action:
             concepts_grouped_by_action_dict[k] = list(g)
-        deleted_concepts = []
+        deleted_concepts_list = []
 
         for d in concepts_grouped_by_action_dict["deleted"]:
             concept_exists_in = list(d.diff.exists_in)[0]
             el_in_existing = source_to_elementdict_by_id[concept_exists_in][e.id]
-            deleted_concepts.append(el_in_existing.get_concept_by_id(d.id))
+            deleted_concepts_list.append(el_in_existing.get_concept_by_id(d.id))
+
+        same_concepts = list([get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["none"]])
+        new_concepts = list([get_concept_for_report(element.get_concept_by_id(r.id)) for r in concepts_grouped_by_action_dict["added"]])
+        deleted_concepts = list([get_concept_for_report(d) for d in deleted_concepts_list])
 
         el = {
             "id": element.id,
             "description": element.description,
-            "same_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in
-                              concepts_grouped_by_action_dict["none"]],
-            "new_concepts": [get_concept_for_report(element.get_concept_by_id(r.id)) for r in
-                             concepts_grouped_by_action_dict["added"]],
-            "deleted_concepts": [get_concept_for_report(d) for d in deleted_concepts]
+            "same_concepts": same_concepts,
+            "new_concepts": new_concepts,
+            "deleted_concepts": deleted_concepts
         }
+
+        if not include_empty and len(same_concepts) == 0 and len(new_concepts) == 0 and len(deleted_concepts) == 0:
+            continue
+
         report_doc.append(el)
+
     result_txt = json.dumps(report_doc)
     with open(destination, 'w') as output:
         output.write(result_txt)
