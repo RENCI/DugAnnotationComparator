@@ -1,0 +1,17 @@
+{
+  "LocalTempPath": "./temp",
+  "LakeFSHost": "http://localhost:8000/api/v1",
+  "LakeFSUsername": "AKIAIOSFOLQUICKSTART",
+  "LakeFSPassword": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  "LakeFSRepository": "testrepo",
+
+  "Branch_1": "main",
+  "RemotePath_1": "annotation/anvil1",
+  "LocalPath_1": "./data",
+
+  "Branch_2": "main",
+  "RemotePath_2": "annotation/anvil2",
+  "LocalPath_2": "./data"
+}
+
+

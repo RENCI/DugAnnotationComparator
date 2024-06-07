@@ -1,19 +1,29 @@
 import argparse
 import json
-import os
+from dataclasses import dataclass
 from itertools import groupby
 
-from annotationdiff import DirFiles, process_element_files, get_diff, get_report_item
+from annotationdiff import process_element_files, get_diff, get_report_item
+from fileoperations import get_element_files, get_files_from_lakefs
 from nodenormalization import get_normalized_concept_ids
 
 
 def main():
     parser = argparse.ArgumentParser(description='Util that compares output annotator files')
-    parser.add_argument('-l', '--list', nargs='*', help='<Required> List of directories', required=True)
+    parser.add_argument('-l', '--list', nargs='*', help='<Required> List of directories', required=False)
     parser.add_argument('-d', '--destination', help='<Required> Path for the output', required=True)
     parser.add_argument('-e', '--empty', help='<Optional> Include variants with no concepts', required=False, default=False)
+    parser.add_argument('-t', '--task',  help='<Optional> Task file path', required=False)
 
     args = parser.parse_args()
+
+    if args.task:
+        with open(args.task) as f:
+            json_obj = json.load(f)
+            acomptask = ACompTask(**json_obj)
+
+        get_files_from_lakefs()
+
 
     dirs = args.list
     destination = args.destination
@@ -21,6 +31,21 @@ def main():
 
     compare(destination, dirs, include_empty)
 
+@dataclass
+class ACompTask:
+    LakeFSHost: str
+    LakeFSUsername: str
+    LakeFSPassword: str
+    LakeFSRepository: str
+    LocalTempPath: str
+
+    Branch_1: str
+    RemotePath_1: str
+    LocalPath_1: str
+
+    Branch_2: str
+    RemotePath_2: str
+    LocalPath_2: str
 
 def compare(destination, dirs, include_empty):
     element_files_to_cmp = get_element_files(dirs)
@@ -109,30 +134,6 @@ def compare(destination, dirs, include_empty):
     result_txt = json.dumps(report_doc)
     with open(destination, 'w') as output:
         output.write(result_txt)
-
-
-def get_element_files(dirs) -> list[DirFiles]:
-    """Selects all elements.txt files grouped by directory (DirFile)"""
-    dir_n_files = []
-    for directory in dirs:
-        files = get_all_files(directory)
-        dir_n_files.append(DirFiles(directory, files))
-    element_files_to_cmp = []
-    for df in dir_n_files:
-        elements = list(filter(lambda f: str.endswith(f, "elements.txt"), df.files))
-        element_files_to_cmp.append(DirFiles(df.directory, elements))
-    return element_files_to_cmp
-
-
-def get_all_files(dirpath) -> list[str]:
-    """Visits all directories and collects all files"""
-    res_files = []
-
-    for root, dirs, files in os.walk(dirpath):
-        for file in files:
-            res_files.append(os.path.join(root, file))
-
-    return res_files
 
 
 if __name__ == '__main__':
