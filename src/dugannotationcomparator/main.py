@@ -37,11 +37,13 @@ def compare(destination, dirs, include_empty):
                 source_to_elementdict_by_id[element.source_dir] = {}
 
             source_to_elementdict_by_id[element.source_dir][element.id] = element
+
     ### get normalized ids
     all_concept_ids = set([c.id
                            for e in all_elements
                            for c in e.concepts])
     norm_result = get_normalized_concept_ids(all_concept_ids)
+
     # set norm_id and label for concepts
     for e in all_elements:
         for c in e.concepts:
@@ -56,6 +58,7 @@ def compare(destination, dirs, include_empty):
                 print(f"Not enough normalized info for concept {c.id}")
     elements_diff = get_diff(all_elements, dirs, True)
     sorted_elements_diff = sorted(elements_diff.items(), key=lambda x: x[1].id)
+
     ## make report
     all_reports = []
     for e in sorted_elements_diff:
@@ -68,7 +71,8 @@ def compare(destination, dirs, include_empty):
         return {
             "id": c.id,
             "norm_id": c.norm_id,
-            "label": c.label
+            "label": c.label,
+            "description": c.description
         }
 
     for e in all_reports:
