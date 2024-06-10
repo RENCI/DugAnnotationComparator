@@ -18,6 +18,8 @@ class ACompTask:
     RemotePath_2: str
     LocalPath_2: str
 
+    OutputPath: str
+
 
 def read_task_from_file(filepath: str) -> ACompTask:
     with open(filepath) as f:
