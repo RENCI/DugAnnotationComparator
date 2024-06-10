@@ -1,9 +1,9 @@
 import argparse
 import json
-from dataclasses import dataclass
 from itertools import groupby
 
 from annotationdiff import process_element_files, get_diff, get_report_item
+from dugannotationcomparator.acomptask import ACompTask, read_task_from_file
 from fileoperations import get_element_files, get_files_from_lakefs
 from nodenormalization import get_normalized_concept_ids
 
@@ -18,12 +18,8 @@ def main():
     args = parser.parse_args()
 
     if args.task:
-        with open(args.task) as f:
-            json_obj = json.load(f)
-            acomptask = ACompTask(**json_obj)
-
+        read_task_from_file(args.task)
         get_files_from_lakefs()
-
 
     dirs = args.list
     destination = args.destination
@@ -31,21 +27,6 @@ def main():
 
     compare(destination, dirs, include_empty)
 
-@dataclass
-class ACompTask:
-    LakeFSHost: str
-    LakeFSUsername: str
-    LakeFSPassword: str
-    LakeFSRepository: str
-    LocalTempPath: str
-
-    Branch_1: str
-    RemotePath_1: str
-    LocalPath_1: str
-
-    Branch_2: str
-    RemotePath_2: str
-    LocalPath_2: str
 
 def compare(destination, dirs, include_empty):
     element_files_to_cmp = get_element_files(dirs)
