@@ -1,5 +1,8 @@
 # DugAnnotationComparator
 
+To download dependencies:
+```pip install -r requirements.txt```
+
 **Example of usage if you need to get files from LakeFS:**
 
 1) Create json file with parameters. You can find sample json file here: src/sample_task.json
