@@ -1,6 +1,11 @@
 # DugAnnotationComparator
 
-Example of usage:
+**Example of usage if you need to get files from LakeFS:**
+
+1) Create json file with parameters. You can find sample json file here: src/sample_task.json
+2) ```python main.py -t ./anvil_main_dbgap.json```
+
+**Example of usage if you have files locally:**
 
 ```python main.py -l "/path1/annotate_and_index/anvil" "/path2/annotate_and_index/anvil" -d ./output.json```
 
