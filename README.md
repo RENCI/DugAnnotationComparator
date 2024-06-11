@@ -23,37 +23,42 @@ example of an output:
 ```
 ...
  {
-    "id": "phv00071849.v1.p1",
-    "description": "if the subject does not meet criteria for dementia, what is the diagnosis?",
+    "id": "phv00180619.v1.p1",
+    "description": "subject's percentile on color trails test 1 form a (d'elia et. al.)",
     "same_concepts": [],
     "new_concepts": [
       {
-        "id": "UMLS:C0243161",
-        "norm_id": "UMLS:C0243161",
-        "label": "criteria"
+        "id": "UMLS:C1264641",
+        "norm_id": "UMLS:C1264641",
+        "label": "Percentile",
+        "description": ""
+      },
+      {
+        "id": "UMLS:C1532337",
+        "norm_id": "UMLS:C1532337",
+        "label": "Percentile value",
+        "description": ""
+      },
+      {
+        "id": "UMLS:C0449570",
+        "norm_id": "UMLS:C0449570",
+        "label": "Test type",
+        "description": ""
+      },
+      {
+        "id": "UMLS:C2826273",
+        "norm_id": "UMLS:C2826273",
+        "label": "Test Name",
+        "description": ""
       }
     ],
     "deleted_concepts": [
       {
-        "id": "PUBCHEM.COMPOUND:6137",
-        "norm_id": "CHEBI:16643",
-        "label": "L-methionine"
-      },
-      {
-        "id": "PUBCHEM.COMPOUND:876",
-        "norm_id": "CHEBI:16811",
-        "label": "methionine"
-      },
-      {
-        "id": "NCBIGene:4233",
-        "norm_id": "NCBIGene:4233",
-        "label": "MET"
-      },
-      {
-        "id": "PR:000010335",
-        "norm_id": "PR:000010335",
-        "label": "hepatocyte growth factor receptor"
+        "id": "PR:000002106",
+        "norm_id": "PR:000002106",
+        "label": "tumor necrosis factor ligand superfamily member 10",
+        "description": "A tumor necrosis factor ligand superfamily member 10/11 that is a translation product of the human TNFSF10 gene or a 1:1 ortholog thereof."
       }
     ]
-  }
+  },
 ```
