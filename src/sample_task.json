@@ -7,11 +7,13 @@
 
   "Branch_1": "main",
   "RemotePath_1": "annotation/anvil1",
-  "LocalPath_1": "./data",
+  "LocalPath_1": "./data-anvil1",
 
   "Branch_2": "main",
   "RemotePath_2": "annotation/anvil2",
-  "LocalPath_2": "./data"
+  "LocalPath_2": "./data-anvil2",
+
+  "OutputPath": "./output.json"
 }
 
 

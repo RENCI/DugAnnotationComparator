@@ -4,27 +4,39 @@ from itertools import groupby
 
 from annotationdiff import process_element_files, get_diff, get_report_item
 from dugannotationcomparator.acomptask import ACompTask, read_task_from_file
-from fileoperations import get_element_files, get_files_from_lakefs
+from fileoperations import get_element_files, get_files_from_lakefs, get_lfs
 from nodenormalization import get_normalized_concept_ids
 
 
 def main():
     parser = argparse.ArgumentParser(description='Util that compares output annotator files')
-    parser.add_argument('-l', '--list', nargs='*', help='<Required> List of directories', required=False)
-    parser.add_argument('-d', '--destination', help='<Required> Path for the output', required=True)
+    parser.add_argument('-l', '--list', nargs='*', help='<Optional> List of directories', required=False)
+    parser.add_argument('-d', '--destination', help='<Optional> Path for the output', required=False)
     parser.add_argument('-e', '--empty', help='<Optional> Include variants with no concepts', required=False, default=False)
     parser.add_argument('-t', '--task',  help='<Optional> Task file path', required=False)
 
     args = parser.parse_args()
 
+    dirs = None
+
     if args.task:
-        read_task_from_file(args.task)
-        get_files_from_lakefs()
+        task = read_task_from_file(args.task)
+        lfs = get_lfs(task)
+        get_files_from_lakefs(lfs, local_path=task.LocalPath_1,
+                              repo_name=task.LakeFSRepository,
+                              remote_path=task.RemotePath_1,
+                              branch=task.Branch_1)
+        get_files_from_lakefs(lfs, local_path=task.LocalPath_2,
+                              repo_name=task.LakeFSRepository,
+                              remote_path=task.RemotePath_2,
+                              branch=task.Branch_2)
+        destination = task.OutputPath
+        dirs = [task.LocalPath_1, task.LocalPath_2]
+    else:
+        destination = args.destination
+        dirs = args.list
 
-    dirs = args.list
-    destination = args.destination
     include_empty = args.empty
-
     compare(destination, dirs, include_empty)
 
 
